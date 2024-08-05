@@ -3,8 +3,8 @@
 
 // 새로 만든 함수들
 int rbtree_insert_fixup(rbtree *t, node_t *cur_node);
-node_t node_left_rotate(rbtree *t, node_t *cur_node);
-node_t node_right_rotate(rbtree *t, node_t *cur_node);
+void node_left_rotate(rbtree *t, node_t *cur_node);
+void node_right_rotate(rbtree *t, node_t *cur_node);
 
 rbtree *new_rbtree(void)
 {
@@ -27,7 +27,7 @@ rbtree *new_rbtree(void)
   return p;
 }
 
-node_t node_left_rotate(rbtree *t, node_t *cur_node)
+void node_left_rotate(rbtree *t, node_t *cur_node)
 {
   node_t *new_parent = cur_node->right;
   cur_node->right = new_parent->left;
@@ -48,10 +48,9 @@ node_t node_left_rotate(rbtree *t, node_t *cur_node)
   {
     cur_node->parent->right = new_parent;
   }
-  // return 값으로??
 }
 
-node_t node_right_rotate(rbtree *t, node_t *cur_node)
+void node_right_rotate(rbtree *t, node_t *cur_node)
 {
   node_t *new_parent = cur_node->left;
   cur_node->left = new_parent->right;
@@ -72,7 +71,6 @@ node_t node_right_rotate(rbtree *t, node_t *cur_node)
   {
     cur_node->parent->right = new_parent;
   }
-  // return 값으로??
 }
 
 void delete_rbtree(rbtree *t)
@@ -82,49 +80,49 @@ void delete_rbtree(rbtree *t)
 }
 int rbtree_insert_fixup(rbtree *t, node_t *cur_node)
 {
-  node_t *uncle_node = (node_t *)calloc(1, sizeof(node_t));
+  node_t *grandpa_node = cur_node->parent->parent;
   while (cur_node->parent->color == RBTREE_RED)
   {
-    if (cur_node->parent == cur_node->parent->parent->left)
+    if (cur_node->parent == grandpa_node->left)
     {
-      uncle_node = cur_node->parent->parent->right;
+      node_t *uncle_node = grandpa_node->right;
       if (uncle_node->color == RBTREE_RED)
       {
         cur_node->parent->color = RBTREE_BLACK;
         uncle_node->color = RBTREE_BLACK;
-        cur_node->parent->parent = RBTREE_RED;
-        cur_node = cur_node->parent->parent;
+        grandpa_node = RBTREE_RED;
+        cur_node = grandpa_node;
       }
       // cur_node가 부모보드와 꺾인 변에 있을 때:
       else if (cur_node == cur_node->parent->right)
       {
         cur_node = cur_node->parent;
-        node_t node_left_rotate(rbtree * t, node_t * cur_node);
+        node_left_rotate(t, cur_node);
       }
       // cur_node가 부모노드와 같은변에 있을 때:
       cur_node->parent->color = RBTREE_BLACK;
       cur_node->parent->parent->color = RBTREE_RED;
-      node_t node_right_rotate(rbtree * t, node_t * cur_node);
+      node_right_rotate(t, grandpa_node);
     }
     else
     {
-      uncle_node = cur_node->parent->parent->left;
-      if (cur_node->parent == cur_node->parent->parent->right)
-      {
-        uncle_node = cur_node->parent->parent->left;
-      }
+      node_t *uncle_node = grandpa_node->left;
       if (uncle_node->color == RBTREE_RED)
       {
         cur_node->parent->color = RBTREE_BLACK;
         uncle_node->color = RBTREE_BLACK;
-        cur_node->parent->parent = RBTREE_RED;
-        cur_node = cur_node->parent->parent;
+        grandpa_node = RBTREE_RED;
+        cur_node = grandpa_node;
       }
       else if (cur_node == cur_node->parent->left)
       {
         cur_node = cur_node->parent;
-        node_t node_right_rotate(rbtree * t, node_t * cur_node);
+        node_right_rotate(t, cur_node);
       }
+      // cur_node가 부모노드와 같은변에 있을 때:
+      cur_node->parent->color = RBTREE_BLACK;
+      cur_node->parent->parent->color = RBTREE_RED;
+      node_left_rotate(t, grandpa_node);
     }
   }
   return 0;
@@ -172,7 +170,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   new_node->right = t->nil;
   new_node->color = RBTREE_RED;
 
-  int rbtree_insert_fixup(rbtree * t, node_t * new_node);
+  rbtree_insert_fixup(t, new_node);
   t->root->color = RBTREE_BLACK;
   return t->root;
 }
