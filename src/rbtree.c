@@ -7,6 +7,7 @@ void rbtree_insert_fixup(rbtree *t, node_t *cur_node);
 void node_left_rotate(rbtree *t, node_t *cur_node);
 void node_right_rotate(rbtree *t, node_t *cur_node);
 void rbtree_transplant(rbtree *t, node_t *killed, node_t *refill);
+void rbtree_delete_fixup(rbtree *t, node_t *cur_node);
 
 rbtree *new_rbtree(void)
 {
@@ -100,8 +101,6 @@ void delete_rbtree(rbtree *t)
 }
 void rbtree_insert_fixup(rbtree *t, node_t *new_node)
 {
-  // cur_node: 회전할 node
-  // node_t *cur_node = (node_t *)calloc(1, sizeof(node_t));
   while (new_node->parent->color == RBTREE_RED)
   {
     // 부모가 할아버지의 왼쪽에 있을 때
@@ -236,28 +235,84 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
 node_t *rbtree_min(const rbtree *t)
 {
   // TODO: implement find
-  return t->root;
+  node_t *cur = t->root;
+  while (cur->left != t->nil)
+  {
+    cur = cur->left;
+  }
+  return cur;
 }
 
 node_t *rbtree_max(const rbtree *t)
 {
   // TODO: implement find
-  return t->root;
+  node_t *cur = t->root;
+  while (cur->right != t->nil)
+  {
+    cur = cur->right;
+  }
+  return cur;
 }
 
-int rbtree_erase(rbtree *t, node_t *p)
+void rbtree_transplant(rbtree *t, node_t *killed, node_t *replacing)
 {
-  // TODO: implement erase
-  node_t *killed = p;
-  color_t killed_oigin_color = killed->color;
-  if (p->left == t->nil)
+  // 만약 삭제할 노드가 root노드이면->
+  if (killed->parent == t->nil)
   {
+    t->root = replacing;
   }
-  else if (p->right == t->nil)
+  // 만약 삭제할 노드가 왼쪽자식이면
+  else if (killed == killed->parent->left)
   {
+    killed->parent->left = replacing;
+  }
+  // 만약 삭제할 노드가 오른쪽자식이면
+  else
+  {
+    killed->parent->right = replacing;
+  }
+  replacing->parent = killed->parent;
+}
+
+int rbtree_erase(rbtree *t, node_t *killed_node)
+{
+  node_t *replacer_node = (node_t *)calloc(1, sizeof(node_t));
+  // TODO: implement erase
+  node_t *focused_node = killed_node;
+  color_t focused_oigin_color = focused_node->color;
+  if (killed_node->left == t->nil)
+  {
+    replacer_node = killed_node->right;
+    rbtree_transplant(t, killed_node, killed_node->left);
+  }
+  else if (killed_node->right == t->nil)
+  {
+    replacer_node = killed_node->left;
+    rbtree_transplant(t, killed_node, killed_node->right);
   }
   else
   {
+    focused_node = rbtree_min(killed_node->right);
+    focused_oigin_color = focused_node->color;
+    replacer_node = focused_node->right;
+    if (focused_node->parent == killed_node)
+    {
+      replacer_node->parent = focused_node;
+    }
+    else
+    {
+      rbtree_transplant(t, focused_node, focused_node->right);
+      focused_node->right = killed_node->right;
+      focused_node->right->parent = focused_node;
+    }
+    rbtree_transplant(t, killed_node, focused_node);
+    focused_node->left = killed_node->left;
+    focused_node->left->parent = focused_node;
+    focused_node->color = killed_node->color;
+  }
+  if (focused_oigin_color == RBTREE_BLACK)
+  {
+    rbtree_delete_fixup(t, replacer_node);
   }
 
   return 0;
