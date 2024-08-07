@@ -96,6 +96,7 @@ void node_right_rotate(rbtree *t, node_t *cur_node)
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
+
   free(t);
 }
 void rbtree_insert_fixup(rbtree *t, node_t *new_node)
@@ -281,10 +282,15 @@ node_t *successor_finder(node_t *successor_seeker, rbtree *t)
   }
   return cur->parent;
 }
+
 int rbtree_erase(rbtree *t, node_t *killed_node)
 {
-  node_t *replacer_node = (node_t *)calloc(1, sizeof(node_t));
+  // focus node---->의 색이 삭제할 색이 됨
+  // replaer node--->삭제될 노드 자리를 채울 노드
+
   // TODO: implement erase
+  node_t *replacer_node = (node_t *)calloc(1, sizeof(node_t));
+
   node_t *focused_node = killed_node;
   color_t focused_oigin_color = focused_node->color;
   if (killed_node->left == t->nil)
@@ -323,6 +329,92 @@ int rbtree_erase(rbtree *t, node_t *killed_node)
   }
 
   return 0;
+}
+
+void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
+{
+  // 회전의 기준점
+  node_t *bro_node;
+  while (cur_node != t->root && cur_node->color == RBTREE_BLACK)
+  {
+    // 1. 삭제할 노드가 왼쪽자식일 때
+    if (cur_node == cur_node->parent->left)
+    {
+      bro_node = cur_node->parent->right;
+      //.........형제의 색이 빨간색일 때----->case 1
+      if (bro_node->color == RBTREE_RED)
+      {
+        bro_node->color = RBTREE_BLACK;
+        cur_node->parent->color = RBTREE_RED;
+        node_left_rotate(t, cur_node->parent);
+        bro_node = cur_node->parent->right;
+      }
+      //..........형제가 검은색이고
+      //.....형제의 자식들이 검은색일 때------>case 2
+      if (bro_node->left->color == RBTREE_BLACK && bro_node->right->color == RBTREE_BLACK)
+      {
+        bro_node->color = RBTREE_RED;
+        cur_node = cur_node->parent;
+      }
+      else
+      {
+        // 형제의 일직선 상의 자식이 검은색일 때---> case 4
+        if (bro_node->right->color == RBTREE_BLACK)
+        {
+          bro_node->left->color = RBTREE_BLACK;
+          bro_node->color = RBTREE_RED;
+          node_right_rotate(t, bro_node);
+          // 회전 후 형제 노드 재조정
+          bro_node = cur_node->parent->right;
+        }
+        // 형제의 꺾인 자식이 검은색일 때--->case 3
+        bro_node->color = cur_node->parent->color;
+        cur_node->parent->color = RBTREE_BLACK;
+        bro_node->right->color = RBTREE_BLACK;
+        node_left_rotate(t, cur_node->parent);
+        cur_node = cur_node->parent;
+      }
+    }
+    // 2. 삭제할 노드가 오른쪽자식일 때
+    else
+    {
+      bro_node = cur_node->parent->left;
+      //.........형제의 색이 빨간색일 때----->case 1
+      if (bro_node->color == RBTREE_RED)
+      {
+        bro_node->color = RBTREE_BLACK;
+        cur_node->parent->color = RBTREE_RED;
+        node_right_rotate(t, cur_node->parent);
+        bro_node = cur_node->parent->left;
+      }
+      //..........형제가 검은색이고
+      //.....형제의 자식들이 검은색일 때------>case 2
+      if (bro_node->left->color == RBTREE_BLACK && bro_node->right->color == RBTREE_BLACK)
+      {
+        bro_node->color = RBTREE_RED;
+        cur_node = cur_node->parent;
+      }
+      else
+      {
+        // 형제의 꺾인 자식이 빨간색일 때---> case 3
+        if (bro_node->left->color == RBTREE_BLACK)
+        {
+          bro_node->right->color = RBTREE_BLACK;
+          bro_node->color = RBTREE_RED;
+          node_left_rotate(t, bro_node);
+          // 회전 후 형제 노드 재조정
+          bro_node = cur_node->parent->right;
+        }
+        // 형제의 일직선 상의 자식이 빨간색일 때---> case 4
+        bro_node->color = cur_node->parent->color;
+        cur_node->parent->color = RBTREE_BLACK;
+        bro_node->left->color = RBTREE_BLACK;
+        node_right_rotate(t, cur_node->parent);
+        cur_node = t->root;
+      }
+    }
+  }
+  cur_node->color = RBTREE_BLACK;
 }
 
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
