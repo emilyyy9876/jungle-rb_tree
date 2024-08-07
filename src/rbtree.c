@@ -9,7 +9,7 @@ void node_right_rotate(rbtree *t, node_t *cur_node);
 void rbtree_transplant(rbtree *t, node_t *killed, node_t *refill);
 void rbtree_delete_fixup(rbtree *t, node_t *cur_node);
 node_t *successor_finder(node_t *, rbtree *t);
-void delete_node(rbtree *t, node_t *node);
+void delete_node(node_t *node, rbtree *t);
 
 rbtree *new_rbtree(void)
 {
@@ -95,19 +95,20 @@ void node_right_rotate(rbtree *t, node_t *cur_node)
 }
 
 // delete_node 생성
-void delete_node(rbtree *t, node_t *node)
+void delete_node(node_t *node, rbtree *t)
 {
   if (node == t->nil)
     return;
-  delete_node(node->right);
-  delete_node(node->left);
+  delete_node(node->right, t);
+  delete_node(node->left, t);
   node = NULL;
   free(node);
 }
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
-
+  delete_node(t->root, t);
+  free(t->nil);
   free(t);
 }
 void rbtree_insert_fixup(rbtree *t, node_t *new_node)
