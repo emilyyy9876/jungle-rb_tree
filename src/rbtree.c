@@ -8,6 +8,7 @@ void node_left_rotate(rbtree *t, node_t *cur_node);
 void node_right_rotate(rbtree *t, node_t *cur_node);
 void rbtree_transplant(rbtree *t, node_t *killed, node_t *refill);
 void rbtree_delete_fixup(rbtree *t, node_t *cur_node);
+node_t *successor_finder(node_t *, rbtree *t);
 
 rbtree *new_rbtree(void)
 {
@@ -95,8 +96,6 @@ void node_right_rotate(rbtree *t, node_t *cur_node)
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
-  t->root = NULL;
-  t->nil = NULL;
   free(t);
 }
 void rbtree_insert_fixup(rbtree *t, node_t *new_node)
@@ -273,7 +272,15 @@ void rbtree_transplant(rbtree *t, node_t *killed, node_t *replacing)
   }
   replacing->parent = killed->parent;
 }
-
+node_t *successor_finder(node_t *successor_seeker, rbtree *t)
+{
+  node_t *cur = successor_seeker;
+  while (cur != t->nil)
+  {
+    cur = cur->left;
+  }
+  return cur->parent;
+}
 int rbtree_erase(rbtree *t, node_t *killed_node)
 {
   node_t *replacer_node = (node_t *)calloc(1, sizeof(node_t));
@@ -292,7 +299,7 @@ int rbtree_erase(rbtree *t, node_t *killed_node)
   }
   else
   {
-    focused_node = rbtree_min(killed_node->right);
+    focused_node = successor_finder(killed_node->right, t);
     focused_oigin_color = focused_node->color;
     replacer_node = focused_node->right;
     if (focused_node->parent == killed_node)
