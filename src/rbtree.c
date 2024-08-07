@@ -9,6 +9,7 @@ void node_right_rotate(rbtree *t, node_t *cur_node);
 void rbtree_transplant(rbtree *t, node_t *killed, node_t *refill);
 void rbtree_delete_fixup(rbtree *t, node_t *cur_node);
 node_t *successor_finder(node_t *, rbtree *t);
+void delete_node(rbtree *t, node_t *node);
 
 rbtree *new_rbtree(void)
 {
@@ -92,7 +93,15 @@ void node_right_rotate(rbtree *t, node_t *cur_node)
   new_parent->right = cur_node;
   cur_node->parent = new_parent;
 }
-
+void delete_node(rbtree *t, node_t *node)
+{
+  if (node == t->nil)
+    return;
+  delete_node(node->right);
+  delete_node(node->left);
+  node = NULL;
+  free(node);
+}
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
@@ -288,10 +297,9 @@ int rbtree_erase(rbtree *t, node_t *killed_node)
   // focus node---->의 색이 삭제할 색이 됨
   // replaer node--->삭제될 노드 자리를 채울 노드
 
-  // TODO: implement erase
-  node_t *replacer_node = (node_t *)calloc(1, sizeof(node_t));
-
+  node_t *replacer_node;
   node_t *focused_node = killed_node;
+
   color_t focused_oigin_color = focused_node->color;
   if (killed_node->left == t->nil)
   {
