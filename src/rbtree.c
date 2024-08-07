@@ -101,8 +101,9 @@ void delete_node(node_t *node, rbtree *t)
     return;
   delete_node(node->right, t);
   delete_node(node->left, t);
-  node = NULL;
+
   free(node);
+  node = NULL;
 }
 void delete_rbtree(rbtree *t)
 {
@@ -151,7 +152,7 @@ void rbtree_insert_fixup(rbtree *t, node_t *new_node)
         new_node->parent->color = RBTREE_BLACK;
         uncle_node->color = RBTREE_BLACK;
         new_node->parent->parent->color = RBTREE_RED;
-        // new_node = new_node->parent->parent;
+        new_node = new_node->parent->parent;
       }
       // 2. 삼촌이 검은색이고, 삽입된 노드가 부모의 왼쪽일 때
       else
@@ -177,7 +178,6 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   // 새로운 노드 만들기
   node_t *new_node = (node_t *)calloc(1, sizeof(node_t));
   new_node->key = key;
-  new_node->color = RBTREE_RED;
 
   node_t *parent_node = t->nil;
   node_t *cur_node = t->root;
@@ -185,7 +185,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   while (cur_node != t->nil)
   {
     parent_node = cur_node;
-    if (new_node->key < cur_node->key)
+    if (key < cur_node->key)
     {
       cur_node = cur_node->left;
     }
@@ -200,7 +200,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   {
     t->root = new_node;
   }
-  else if (new_node->key < parent_node->key)
+  else if (key < parent_node->key)
   {
     parent_node->left = new_node;
   }
@@ -213,7 +213,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   new_node->color = RBTREE_RED;
 
   rbtree_insert_fixup(t, new_node);
-  // free(cur_node); -------------double free detected 에러..현재 cur은 로컬변수이므로 해제 필요없음
+
   return t->root;
 }
 
@@ -222,13 +222,14 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
   // TODO: implement find
   // 노드 current 초기화
   node_t *cur_node = t->root;
+
   // 노드 current가 null이 아닌동안
   while (cur_node != t->nil)
   {
     // 만약 key값이 current보다 크면
-    if (key > cur_node->key)
+    if (key == cur_node->key)
     {
-      cur_node = cur_node->right;
+      return cur_node;
     }
     // 만약 key값이 current보다 작으면
     else if (key < cur_node->key)
@@ -237,7 +238,7 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
     }
     else
     {
-      return (cur_node);
+      cur_node = cur_node->right;
     }
   }
   // 이 후에도 못 찾으면
@@ -288,36 +289,36 @@ void rbtree_transplant(rbtree *t, node_t *killed, node_t *replacing)
 node_t *successor_finder(node_t *successor_seeker, rbtree *t)
 {
   node_t *cur = successor_seeker;
-  while (cur != t->nil)
+  while (cur->left != t->nil)
   {
     cur = cur->left;
   }
-  return cur->parent;
+  return cur;
 }
 
 int rbtree_erase(rbtree *t, node_t *killed_node)
 {
   // focus node---->의 색이 삭제할 색이 됨
-  // replaer node--->삭제될 노드 자리를 채울 노드
+  // replacer node--->focus node 자리를 채울 노드
 
   node_t *replacer_node;
   node_t *focused_node = killed_node;
 
-  color_t focused_oigin_color = focused_node->color;
+  color_t focus_origin_color = focused_node->color;
   if (killed_node->left == t->nil)
   {
     replacer_node = killed_node->right;
-    rbtree_transplant(t, killed_node, killed_node->left);
+    rbtree_transplant(t, killed_node, killed_node->right);
   }
   else if (killed_node->right == t->nil)
   {
     replacer_node = killed_node->left;
-    rbtree_transplant(t, killed_node, killed_node->right);
+    rbtree_transplant(t, killed_node, killed_node->left);
   }
   else
   {
     focused_node = successor_finder(killed_node->right, t);
-    focused_oigin_color = focused_node->color;
+    focus_origin_color = focused_node->color;
     replacer_node = focused_node->right;
     if (focused_node->parent == killed_node)
     {
@@ -334,7 +335,7 @@ int rbtree_erase(rbtree *t, node_t *killed_node)
     focused_node->left->parent = focused_node;
     focused_node->color = killed_node->color;
   }
-  if (focused_oigin_color == RBTREE_BLACK)
+  if (focus_origin_color == RBTREE_BLACK)
   {
     rbtree_delete_fixup(t, replacer_node);
   }
@@ -383,7 +384,7 @@ void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
         cur_node->parent->color = RBTREE_BLACK;
         bro_node->right->color = RBTREE_BLACK;
         node_left_rotate(t, cur_node->parent);
-        cur_node = cur_node->parent;
+        cur_node = t->root;
       }
     }
     // 2. 삭제할 노드가 오른쪽자식일 때
@@ -414,7 +415,7 @@ void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
           bro_node->color = RBTREE_RED;
           node_left_rotate(t, bro_node);
           // 회전 후 형제 노드 재조정
-          bro_node = cur_node->parent->right;
+          bro_node = cur_node->parent->left;
         }
         // 형제의 일직선 상의 자식이 빨간색일 때---> case 4
         bro_node->color = cur_node->parent->color;
