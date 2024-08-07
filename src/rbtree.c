@@ -93,6 +93,8 @@ void node_right_rotate(rbtree *t, node_t *cur_node)
   new_parent->right = cur_node;
   cur_node->parent = new_parent;
 }
+
+// delete_node 생성
 void delete_node(rbtree *t, node_t *node)
 {
   if (node == t->nil)
