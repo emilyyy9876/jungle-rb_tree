@@ -103,7 +103,7 @@ void delete_node(node_t *node, rbtree *t)
   delete_node(node->left, t);
 
   free(node);
-  node = NULL;
+  // node = NULL;
 }
 void delete_rbtree(rbtree *t)
 {
@@ -339,7 +339,7 @@ int rbtree_erase(rbtree *t, node_t *killed_node)
   {
     rbtree_delete_fixup(t, replacer_node);
   }
-
+  free(killed_node);
   return 0;
 }
 
@@ -370,7 +370,7 @@ void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
       }
       else
       {
-        // 형제의 일직선 상의 자식이 검은색일 때---> case 4
+        // 부모-형제의 꺾인 자식이 빨간색일 때---> case 4
         if (bro_node->right->color == RBTREE_BLACK)
         {
           bro_node->left->color = RBTREE_BLACK;
@@ -379,7 +379,7 @@ void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
           // 회전 후 형제 노드 재조정
           bro_node = cur_node->parent->right;
         }
-        // 형제의 꺾인 자식이 검은색일 때--->case 3
+        // 부모-형제의 일직선상의 자식이 빨간색일 때--->case 3
         bro_node->color = cur_node->parent->color;
         cur_node->parent->color = RBTREE_BLACK;
         bro_node->right->color = RBTREE_BLACK;
@@ -408,7 +408,7 @@ void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
       }
       else
       {
-        // 형제의 꺾인 자식이 빨간색일 때---> case 3
+        // 부모-형제의 꺾인 자식이 빨간색일 때---> case 3
         if (bro_node->left->color == RBTREE_BLACK)
         {
           bro_node->right->color = RBTREE_BLACK;
@@ -417,7 +417,7 @@ void rbtree_delete_fixup(rbtree *t, node_t *cur_node)
           // 회전 후 형제 노드 재조정
           bro_node = cur_node->parent->left;
         }
-        // 형제의 일직선 상의 자식이 빨간색일 때---> case 4
+        // 부모-형제의 일직선 상의 자식이 빨간색일 때---> case 4
         bro_node->color = cur_node->parent->color;
         cur_node->parent->color = RBTREE_BLACK;
         bro_node->left->color = RBTREE_BLACK;

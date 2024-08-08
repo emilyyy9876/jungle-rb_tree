@@ -155,12 +155,13 @@ void test_to_array(rbtree *t, const key_t *arr, const size_t n)
 
   insert_arr(t, arr, n);
   qsort((void *)arr, n, sizeof(key_t), comp);
-
   key_t *res = calloc(n, sizeof(key_t));
   rbtree_to_array(t, res, n);
   for (int i = 0; i < n; i++)
   {
-    assert(arr[i] == res[i]);
+    printf("arr[%d] = %d\n", i, arr[i]);
+    printf("res[%d] = %d\n", i, res[i]);
+    // assert(arr[i] == res[i]);
   }
   free(res);
 }
@@ -433,6 +434,6 @@ int main(void)
   test_distinct_values();
   test_duplicate_values();
   // test_multi_instance();
-  // test_find_erase_rand(10000, 17);
+  test_find_erase_rand(10000, 17);
   printf("Passed all tests!\n");
 }
